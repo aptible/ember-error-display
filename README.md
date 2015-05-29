@@ -78,7 +78,7 @@ export default Ember.Object.extend({
 
 To use this adapter:
 
-```
+```js
 var errorThing = {
   somePropWithError: 'oh my!';
 };
