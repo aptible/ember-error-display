@@ -1,0 +1,1 @@
+export { default } from 'ember-error-display/services/error-display';
