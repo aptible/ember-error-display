@@ -24,7 +24,7 @@ export default Ember.Component.extend({
 ```
 
 ```hbs
-// app/components/edit-thing/template.hbs
+{{! app/components/edit-thing/template.hbs }}
 <h1>Edit this thing</h1>
 {{error-display for="base"}}
 
