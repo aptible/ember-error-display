@@ -1,25 +1,89 @@
-# Ember-error-display
+# ember-error-display
 
-This README outlines the details of collaborating on this Ember addon.
+[![Build Status](https://travis-ci.org/aptible/ember-error-display.svg)](https://travis-ci.org/aptible/ember-error-display)
+
+Provides a service responsible for managing displayed errors, compatible with
+native `Error` objects, invalid Ember-Data models, and invalid ember-validations
+targets.
+
+```js
+// app/components/edit-thing/component.js
+export default Ember.Component.extend({
+  errorDisplay: Ember.inject.service(),
+  actions: {
+    save(model) {
+      model.save().then(() => {
+        this.transitionTo('index');
+      }, (e) => {
+        this.get('errorDisplay').report('error', e);
+        this.get('errorDisplay').report('model', model);
+      });
+    }
+  }
+});
+```
+
+```hbs
+// app/components/edit-thing/template.hbs
+<h1>Edit this thing</h1>
+{{error-display for="base"}}
+
+<label>
+  {{error-display model=model for="name"}}
+  {{input type="text" value=model.name}}
+</label>
+
+<button {{action 'save' model}}>Save</button>
+```
 
 ## Installation
 
-* `git clone` this repository
-* `npm install`
-* `bower install`
+```
+ember install ember-error-display
+```
 
-## Running
+## error-adapters
 
-* `ember server`
-* Visit your app at http://localhost:4200.
+Out of the box, errors from these three systems are supported:
 
-## Running Tests
+* Native JavaScript `Error` objects will be make base errors.
+* Invalid [Ember-Data](https://github.com/emberjs/data) models will add to base
+  errors, and will also populate model errors.
+* Invalid objects with the
+  [ember-validations](https://github.com/dockyard/ember-validations) mixin will
+  populate model errors.
 
-* `ember test`
-* `ember test --server`
+When reporting an error, the adapter is always specified:
 
-## Building
+```js
+errorDisplay.report('error', new Error('Some failure'));
+errorDisplay.report('model', emberDataModel);
+errorDisplay.report('validated', emberValidationsHasValidated);
+```
 
-* `ember build`
+Custom adapters should be created in the `error-adapters` namespace. For
+example:
 
-For more information on using ember-cli, visit [http://www.ember-cli.com/](http://www.ember-cli.com/).
+```js
+// app/error-adapters/custom.js
+export default Ember.Object.extend({
+  // * `errors` is a manager for displayed errors.
+  // * `error` is the model or subject passed to `report()`.
+  report(errors, error) {
+    errors.clearBaseErrors();
+    errors.addBaseError(error.somePropWithError);
+  }
+});
+```
+
+To use this adapter:
+
+```
+var errorThing = {
+  somePropWithError: 'oh my!';
+};
+errorDisplay.report('custom', errorThing);
+```
+
+The full API available to custom adapters (the `errors` object above) is
+available [here in the error-display service code](https://github.com/aptible/ember-error-display/blob/636ef95d449decbedc77c5f701474f7401e9f86a/addon/services/error-display.js#L3).
